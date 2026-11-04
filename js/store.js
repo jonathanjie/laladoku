@@ -16,8 +16,10 @@ const DEFAULTS = {
   // The player closed the "add to home screen" banner on the home screen.
   installBannerHidden: false,
   settings: {
-    // Shade cells that a placed cat already rules out.
+    // Guide dots: mark cells that a placed cat already rules out.
     shadeBlocked: true,
+    // Let a tap on a cross pencil in a "maybe Lala here" silhouette.
+    maybeMarks: false,
     haptics: true,
     showTimer: true,
     // 'auto' follows the device; 'light' or 'dark' override it.

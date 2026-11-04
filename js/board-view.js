@@ -4,8 +4,8 @@
  * It knows nothing about rules or lives. The game screen feeds it marks and
  * listens for taps and drags; the Techniques notebook uses it read-only.
  */
-import { CAT, CROSS, EMPTY } from './engine.js';
-import { lalaFace, CROSS_SVG } from './lala.js';
+import { CAT, CROSS, EMPTY, MAYBE, WRONG } from './engine.js';
+import { lalaFace, CROSS_SVG, MAYBE_SVG } from './lala.js';
 
 /**
  * Region colours, in hue order around the colour wheel. The CSS defines one
@@ -143,18 +143,22 @@ export class BoardView {
       for (let c = 0; c < n; c++) {
         const cell = this.cells[r][c];
         const mark = marks[r][c];
-        const state = mark === CAT ? 'cat' : mark === CROSS ? 'cross' : 'empty';
+        const state = { [CAT]: 'cat', [CROSS]: 'cross', [MAYBE]: 'maybe', [WRONG]: 'wrong' }[mark] ?? 'empty';
         if (cell.dataset.state !== state) {
           cell.dataset.state = state;
-          cell.firstChild.innerHTML = state === 'cat'
-            ? lalaFace({ whiskers: this.board.n <= 7 })
-            : state === 'cross' ? CROSS_SVG : '';
+          cell.firstChild.innerHTML = {
+            cat: lalaFace({ whiskers: this.board.n <= 7 }),
+            cross: CROSS_SVG,
+            wrong: CROSS_SVG,
+            maybe: MAYBE_SVG,
+            empty: '',
+          }[state];
         }
         cell.classList.toggle('is-blocked', Boolean(blocked && mark === EMPTY && blocked[r][c]));
         cell.setAttribute(
           'aria-label',
           `Row ${r + 1}, column ${c + 1}, ${this.colourName(this.board.regions[r][c])}` +
-            (state === 'cat' ? ', cat' : state === 'cross' ? ', crossed out' : ''),
+            ({ cat: ', cat', cross: ', crossed out', maybe: ', maybe a cat', wrong: ', not a cat, locked' }[state] ?? ''),
         );
       }
     }

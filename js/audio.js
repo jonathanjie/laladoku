@@ -192,6 +192,11 @@ export class SoundKit {
     noiseBurst(this.mixer, t, { duration: 0.03, freq: 3600 + Math.random() * 800, q: 1.6, gain: 0.3 });
   }
 
+  /** Pencilling in a maybe-Lala: a quiet, high pip. */
+  maybe(t) {
+    bell(this.mixer, t, hz(91), { gain: 0.07, decay: 0.25, reverb: 0.2 });
+  }
+
   /** Clearing a cell or undoing: a soft, low rub. */
   erase(t) {
     noiseBurst(this.mixer, t, { duration: 0.07, freq: 1400, q: 0.8, gain: 0.32 });
@@ -423,6 +428,7 @@ class LiveAudio {
   }
 
   cross() { this.play('cross'); }
+  maybe() { this.play('maybe'); }
   erase() { this.play('erase'); }
   cat(catNumber) { this.play('cat', catNumber); }
   wrong() { this.play('wrong'); }

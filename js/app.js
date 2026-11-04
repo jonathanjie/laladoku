@@ -285,6 +285,7 @@ async function showLevel(levelNumber, token) {
     coach: levelNumber <= COACHED_LEVELS,
     onExit: () => go('#/map'),
     onRules: showRules,
+    onSettings: showSettings,
     onLose: () => showLose(`#/play/${levelNumber}`, `level:${levelNumber}`),
     onWin: (result) => {
       store.recordWin(levelNumber, result);
@@ -381,6 +382,7 @@ async function showQuickGame([, sizeText, tier, seedText], token) {
     coach: false,
     onExit: () => go('#/quick'),
     onRules: showRules,
+    onSettings: showSettings,
     onLose: () => showLose(location.hash, `quick:${size}:${tier}:${seed}`),
     onWin: (result) => {
       store.recordQuickPlayWin();
@@ -500,9 +502,9 @@ function showRules() {
       ${rulesHtml()}
       <ul class="howto">
         <li><b>Tap</b> a cell to cross it out; tap a cross to clear it.</li>
-        <li><b>Double-tap</b> quickly to place Lala.</li>
+        <li><b>Double-tap</b> quickly to place Lala. Once she\u2019s in the right spot, she stays.</li>
         <li><b>Drag</b> across cells to cross out many at once.</li>
-        <li>A cat on a wrong cell costs a paw. You have <b>${STARTING_LIVES} paws</b> and <b>${STARTING_HINTS} hints</b> per board.</li>
+        <li>A cat on a wrong cell costs a paw and leaves a red \u2715 there. You have <b>${STARTING_LIVES} paws</b> and <b>${STARTING_HINTS} hints</b> per board.</li>
         <li>Every board has one answer and can be solved by logic alone. Stuck? The <a href="#/learn">Techniques notebook</a> shows how.</li>
       </ul>
       <div class="sheet__actions"><button class="btn btn--primary" data-close>Let’s play</button></div>`,
@@ -568,30 +570,45 @@ function showSettings() {
       <input type="checkbox" data-setting="${key}" ${s[key] ? 'checked' : ''}>
       <i aria-hidden="true"></i>
     </label>`;
+  const themeChips = [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([value, label]) => `
+    <label class="chip"><input type="radio" name="theme" value="${value}" ${s.theme === value ? 'checked' : ''}><span>${label}</span></label>`).join('');
+
   openSheet({
+    // A game on screen picks up changed settings (dots, timer, tap cycle).
+    onClose: () => activeGame?.refresh(),
     html: `
       <h2 id="sheet-title" class="sheet__title">Settings</h2>
-      <fieldset class="theme-choice">
-        <legend>Theme</legend>
-        <div class="chips chips--three">
-          ${[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([value, label]) => `
-            <label class="chip"><input type="radio" name="theme" value="${value}" ${s.theme === value ? 'checked' : ''}><span>${label}</span></label>`).join('')}
-        </div>
-        <small>Auto matches your phone\u2019s light or dark mode.</small>
-      </fieldset>
-      <div class="toggles">
-        ${toggle('sound', 'Sound effects', 'Ticks, chimes and Lala\u2019s little chirps.')}
+
+      <section class="settings-group" aria-labelledby="settings-sound">
+        <h3 id="settings-sound">Sound</h3>
+        ${toggle('sound', 'Sound effects', 'Ticks, chimes and Lala’s little chirps.')}
         ${toggle('music', 'Music', 'A calm music box that never plays the same tune twice.')}
-        ${toggle('shadeBlocked', 'Shade ruled-out cells', 'Dot the cells a placed cat already rules out.')}
-        ${toggle('showTimer', 'Show timer', 'The clock never limits you; it only keeps your best time.')}
+      </section>
+
+      <section class="settings-group" aria-labelledby="settings-play">
+        <h3 id="settings-play">Play</h3>
+        ${toggle('maybeMarks', 'Maybe-Lala marks', 'Tap a cross again to pencil in a Lala silhouette where you think she might go. Tap once more to clear it. Double-tap still places Lala.')}
+        ${toggle('shadeBlocked', 'Guide dots', 'Dot the cells a placed Lala already rules out: her row, column, colour and neighbours. Turn off for a purer challenge.')}
         ${toggle('haptics', 'Vibration', 'A small buzz on moves and slips, where supported.')}
-      </div>
+      </section>
+
+      <section class="settings-group" aria-labelledby="settings-look">
+        <h3 id="settings-look">Look</h3>
+        <div class="theme-choice">
+          <span class="theme-choice__label" id="theme-label">Theme</span>
+          <div class="chips chips--three" role="radiogroup" aria-labelledby="theme-label">${themeChips}</div>
+          <small>Auto matches your phone’s light or dark mode.</small>
+        </div>
+        ${toggle('showTimer', 'Show timer', 'The clock never limits you; it only keeps your best time.')}
+      </section>
+
       <div class="sheet__actions">
         ${installMode() === 'installed' ? '' : '<button class="btn btn--quiet" data-install>Add to Home Screen</button>'}
         <button class="btn btn--quiet" data-reset>Reset progress</button>
         <button class="btn btn--primary" data-close>Done</button>
       </div>`,
   });
+
   sheet.querySelectorAll('[data-setting]').forEach((input) => {
     input.addEventListener('change', () => {
       store.updateSetting(input.dataset.setting, input.checked);

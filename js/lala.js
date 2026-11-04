@@ -88,6 +88,11 @@ export function lalaFace({ mood = 'calm', whiskers = true, label = '' } = {}) {
   </svg>`;
 }
 
+/** A "maybe Lala here" note: her head as a soft, flat silhouette. */
+export const MAYBE_SVG = `<svg class="maybe" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+  <path d="M17 47 L21 12 Q22 9 25 11 L44 26 Q50 25 56 26 L75 11 Q78 9 79 12 L83 47 Q88 54 88 58 C88 76 71 90 50 90 C29 90 12 76 12 58 Q12 54 17 47 Z"/>
+</svg>`;
+
 /** The cross mark: two slightly uneven ink strokes, like a pencil tick. */
 export const CROSS_SVG = `<svg class="cross" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M6.5 6.8 L17.4 17.2" /><path d="M17.2 6.4 L6.8 17.5" />

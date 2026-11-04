@@ -29,17 +29,19 @@ hides once the game runs as an installed app, and Settings keeps the option.
 
 | Input | Effect |
 | --- | --- |
-| Tap a cell | Toggle a cross (tapping a cat lifts it off) |
-| Double-tap a cell quickly | Place Lala |
+| Tap a cell | Toggle a cross (with Maybe-Lala marks on: cross, then silhouette, then clear) |
+| Double-tap a cell quickly | Place Lala (a correct Lala is locked in place) |
 | Drag across cells | Cross out many cells (or erase crosses, if the drag starts on one) |
 | Arrow keys, Space/Enter | Move, toggle a cross (press twice quickly for a cat) |
 | X, C, Backspace | Cross, cat, clear |
-| Ctrl/Cmd+Z, H | Undo, hint |
+| M, H | Maybe-Lala mark, hint |
 
 ### Challenge rules
 
-- **3 paws (lives) and 2 hints per board.** A cat on a wrong cell costs a paw,
-  and Lala crosses that cell out for you. Crosses are never penalised.
+- **3 paws (lives) and 2 hints per board.** A cat on a wrong cell costs a paw
+  and leaves a locked red cross, so the same slip never costs twice. A correct
+  cat is locked too. Crosses are never penalised, and Clear only removes your
+  own crosses and Maybe-Lala marks.
 - A hint explains the next logical step in plain words, highlights it on the
   board, and offers to do it. If a cross covers a cat's cell, the hint points
   that out first.

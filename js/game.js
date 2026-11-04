@@ -2,11 +2,14 @@
  * The game screen: one board, its input, lives, hints and coaching.
  *
  * Input
- *   tap a cell        toggle a cross (empty <-> cross); a cat is lifted off
- *   double-tap        place a cat (the first tap of the pair is undone)
+ *   tap a cell        toggle a cross (empty <-> cross); a cat is lifted off.
+ *                     With "Maybe-Lala marks" on: empty -> cross -> maybe -> empty.
+ *   double-tap        place a cat (the first tap of the pair is taken back)
+ *   A correct cat and the red cross left by a wrong cat are locked: no tap,
+ *   drag, key or Clear changes them.
  *   drag across cells paint crosses (or erase them, if the drag starts on one)
  *   keyboard          arrows move, Space/Enter cycles, X cross, C cat,
- *                     Backspace clears, Ctrl/Cmd+Z undo, H hint
+ *                     M maybe, Backspace clears, H hint
  *
  * Challenge rules
  *   A cat on a wrong cell costs a life (a paw) and the cell is crossed out.
@@ -14,7 +17,7 @@
  *   hint points out a cross that hides a cat before anything else.
  */
 import {
-  emptyMarks, candidateGrid, findHint, CAT, CROSS, EMPTY,
+  emptyMarks, candidateGrid, findHint, isOpenMark, CAT, CROSS, EMPTY, MAYBE, WRONG,
 } from './engine.js';
 import { BoardView } from './board-view.js';
 import { explainHint } from './explain.js';
@@ -86,7 +89,10 @@ export class Game {
             <span class="eyebrow">${eyebrow}</span>
             <h1>${title}</h1>
           </div>
-          <button class="icon-btn" data-action="rules" aria-label="How to play">${ICONS.book}</button>
+          <div class="topbar__tools">
+            <button class="icon-btn" data-action="rules" aria-label="How to play">${ICONS.book}</button>
+            <button class="icon-btn" data-action="settings" aria-label="Settings">${ICONS.gear}</button>
+          </div>
         </header>
         <div class="status">
           <div class="pill lives" role="img"></div>
@@ -95,7 +101,6 @@ export class Game {
         <div class="board-slot"></div>
         <div class="tip" aria-live="polite"></div>
         <nav class="toolbar" aria-label="Tools">
-          <button class="tool" data-action="undo">${ICONS.undo}<span>Undo</span></button>
           <button class="tool tool--hint" data-action="hint">${ICONS.bulb}<span>Hint</span><b class="badge"></b></button>
           <button class="tool" data-action="restart">${ICONS.eraser}<span>Clear</span></button>
         </nav>
@@ -158,12 +163,22 @@ export class Game {
       this.coach ? 'Hint (free while Lala coaches)' : `Hint, ${this.hintsLeft} left`,
     );
     this.renderTimer();
+    // The reminder's tap instructions depend on settings, so redraw it
+    // whenever no tip is covering it.
+    if (!this.tipEl.classList.contains('is-active')) this.showReminder();
   }
 
   /** Empty cells that a placed cat already rules out. */
   blockedCells() {
     const grid = candidateGrid(this.board, this.marks);
     return this.marks.map((row, r) => row.map((mark, c) => mark === EMPTY && !grid[r][c]));
+  }
+
+  /** What a single tap turns a cell into. */
+  nextTapMark(mark) {
+    if (mark === EMPTY) return CROSS;
+    if (mark === CROSS && settings().maybeMarks) return MAYBE;
+    return EMPTY;
   }
 
   /* ---------------------------------------------------------------- *
@@ -231,7 +246,7 @@ export class Game {
 
   paintCell(drag, r, c) {
     const before = this.marks[r][c];
-    if (before === CAT) return;
+    if (this.isLocked(r, c)) return;
     const after = drag.paint === 'cross' ? CROSS : EMPTY;
     if (before === after) return;
     this.marks[r][c] = after;
@@ -267,16 +282,17 @@ export class Game {
     const previous = this.lastTap;
     this.lastTap = null;
 
+    if (this.isLocked(r, c)) return;
+
     const isDoubleTap = previous && previous.r === r && previous.c === c &&
       now - previous.time < DOUBLE_TAP_MS;
     if (isDoubleTap) {
       this.revertStep(previous.step);
-      if (this.marks[r][c] === CAT) this.afterChange(); // the first tap had lifted this cat
-      else this.placeCat(r, c);
+      this.placeCat(r, c);
       return;
     }
 
-    this.setMark(r, c, this.marks[r][c] === EMPTY ? CROSS : EMPTY);
+    this.setMark(r, c, this.nextTapMark(this.marks[r][c]));
     this.lastTap = { r, c, time: now, step: this.history.at(-1) };
   }
 
@@ -289,11 +305,6 @@ export class Game {
 
   handleKey(e) {
     if (this.finished || document.querySelector('.sheet:not([hidden])')) return;
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-      e.preventDefault();
-      this.undo();
-      return;
-    }
     if (e.key === 'h' || e.key === 'H') { this.hint(); return; }
 
     const cell = document.activeElement?.closest?.('.cell');
@@ -315,8 +326,10 @@ export class Game {
       this.tap(r, c);
     } else if (e.key === 'x' || e.key === 'X') {
       this.setMark(r, c, this.marks[r][c] === CROSS ? EMPTY : CROSS);
+    } else if (e.key === 'm' || e.key === 'M') {
+      this.setMark(r, c, this.marks[r][c] === MAYBE ? EMPTY : MAYBE);
     } else if (e.key === 'c' || e.key === 'C') {
-      if (this.marks[r][c] !== CAT) this.placeCat(r, c);
+      if (!this.isLocked(r, c)) this.placeCat(r, c);
     } else if (e.key === 'Backspace' || e.key === 'Delete') {
       this.setMark(r, c, EMPTY);
     }
@@ -327,7 +340,7 @@ export class Game {
     if (!action) return;
     if (action === 'exit') this.options.onExit();
     else if (action === 'rules') this.options.onRules();
-    else if (action === 'undo') this.undo();
+    else if (action === 'settings') this.options.onSettings();
     else if (action === 'hint') this.hint();
     else if (action === 'restart') this.clearMarks();
     else if (action === 'apply') this.applyTip();
@@ -343,12 +356,19 @@ export class Game {
    * Moves
    * ---------------------------------------------------------------- */
 
+  /** Correct cats and red crosses never change once placed. */
+  isLocked(r, c) {
+    const mark = this.marks[r][c];
+    return mark === CAT || mark === WRONG;
+  }
+
   setMark(r, c, mark) {
-    if (this.finished || this.marks[r][c] === mark) return;
+    if (this.finished || this.marks[r][c] === mark || this.isLocked(r, c)) return;
     const before = this.marks[r][c];
     this.marks[r][c] = mark;
     // Cats make their own sound in placeCat.
     if (mark === CROSS) audio.cross();
+    else if (mark === MAYBE) audio.maybe();
     else if (mark === EMPTY) audio.erase();
     this.commit([[r, c, before, mark]]);
   }
@@ -369,10 +389,11 @@ export class Game {
   loseLife(r, c) {
     this.lives--;
     this.mistakes++;
-    // The cell is now known to be empty, so cross it for the player.
+    // The cell is now known to be empty: lock a red cross on it, so the
+    // same slip can never cost a second paw.
     const before = this.marks[r][c];
-    this.marks[r][c] = CROSS;
-    this.commit([[r, c, before, CROSS]], { keepTip: true });
+    this.marks[r][c] = WRONG;
+    this.commit([[r, c, before, WRONG]], { keepTip: true });
     this.view.pulse(r, c, 'is-wrong', 700);
     this.buzz([30, 40, 30]);
     audio.wrong();
@@ -390,7 +411,10 @@ export class Game {
     });
   }
 
-  /** Record one undoable step and react to it. */
+  /**
+   * Record one step and react to it. Steps are kept so a double tap can
+   * take back its first tap (see revertStep).
+   */
   commit(changes, { keepTip = false } = {}) {
     if (!changes.length) return;
     this.history.push(changes);
@@ -406,21 +430,13 @@ export class Game {
     else if (!keepTip) this.dismissTip();
   }
 
-  undo() {
-    if (this.finished) return;
-    const changes = this.history.pop();
-    if (!changes) return;
-    audio.erase();
-    for (const [r, c, before] of changes.slice().reverse()) this.marks[r][c] = before;
-    this.afterChange();
-  }
-
   clearMarks() {
     if (this.finished) return;
     const changes = [];
     for (let r = 0; r < this.board.n; r++) {
       for (let c = 0; c < this.board.n; c++) {
-        if (this.marks[r][c] !== EMPTY) changes.push([r, c, this.marks[r][c], EMPTY]);
+        const mark = this.marks[r][c];
+        if (mark === CROSS || mark === MAYBE) changes.push([r, c, mark, EMPTY]);
       }
     }
     for (const [r, c] of changes) this.marks[r][c] = EMPTY;
@@ -545,8 +561,8 @@ export class Game {
       this.placeCat(step.r, step.c);
     } else {
       const changes = step.exclude
-        .filter(([r, c]) => this.marks[r][c] === EMPTY)
-        .map(([r, c]) => [r, c, EMPTY, CROSS]);
+        .filter(([r, c]) => isOpenMark(this.marks[r][c]))
+        .map(([r, c]) => [r, c, this.marks[r][c], CROSS]);
       for (const [r, c] of changes) this.marks[r][c] = CROSS;
       if (changes.length) audio.cross();
       this.commit(changes);
@@ -577,7 +593,9 @@ export class Game {
     this.tipEl.classList.remove('is-active');
     this.tipEl.innerHTML = `
       <p class="tip__reminder">${RULES_REMINDER}
-        <span class="tip__how">Tap for ✕, double-tap for Lala. Drag to cross out many cells.</span>
+        <span class="tip__how">${settings().maybeMarks
+    ? 'Tap: \u2715, then maybe-Lala, then clear. Double-tap for Lala.'
+    : 'Tap for \u2715, double-tap for Lala. Drag to cross out many cells.'}</span>
       </p>`;
   }
 }

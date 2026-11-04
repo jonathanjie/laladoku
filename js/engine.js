@@ -17,6 +17,21 @@
 export const EMPTY = 0;
 export const CAT = 1;
 export const CROSS = 2;
+/**
+ * A "maybe Lala here" note the player pencils in. It is only a reminder:
+ * every rule and deduction treats it exactly like an empty cell.
+ */
+export const MAYBE = 3;
+/**
+ * A cross left by a wrong cat. It is locked: the player cannot change it,
+ * and every rule treats it exactly like a cross.
+ */
+export const WRONG = 4;
+
+/** Is this cell still open as far as the rules are concerned? */
+export function isOpenMark(mark) {
+  return mark === EMPTY || mark === MAYBE;
+}
 
 /** Decode one level record from levels/chunk-*.json (see scripts/build_levels.mjs). */
 export function decodeLevel(rec) {
@@ -169,7 +184,7 @@ export function candidateGrid(board, marks) {
   const grid = Array.from({ length: n }, () => new Array(n).fill(false));
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
-      if (marks[r][c] !== EMPTY) continue;
+      if (!isOpenMark(marks[r][c])) continue;
       if (rowCat[r] >= 0 || colCat[c] >= 0) continue;
       if (regCat[regions[r][c]] >= 0) continue;
       let touching = false;
@@ -592,7 +607,7 @@ export function findHint(board, marks, options = {}) {
   if (options.allowReveal && board.solution) {
     for (let r = 0; r < board.n; r++) {
       const c = board.solution[r];
-      if (marks[r][c] === EMPTY) {
+      if (isOpenMark(marks[r][c])) {
         return {
           kind: 'place',
           r,

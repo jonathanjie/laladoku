@@ -197,12 +197,13 @@ svg { display: block; }
 
 .topbar {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 90px 1fr 90px;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
 .topbar__title { text-align: center; min-width: 0; }
+.topbar__tools { display: flex; justify-content: flex-end; gap: 2px; }
 .topbar__title h1 { font-size: 1.6rem; font-weight: 700; }
 .topbar__title .eyebrow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -395,6 +396,11 @@ svg { display: block; }
 }
 .cell[data-state='cross'] .cell__mark { inset: 24%; }
 .cross { width: 100%; height: 100%; fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; opacity: .62; }
+.cell[data-state='maybe'] .cell__mark { inset: 14%; }
+.maybe { width: 100%; height: 100%; fill: var(--ink); opacity: .22; }
+.cell[data-state='wrong'] { cursor: default; }
+.cell[data-state='wrong'] .cell__mark { inset: 20%; }
+.cell[data-state='wrong'] .cross { stroke: var(--danger); stroke-width: 3.2; opacity: .95; }
 
 /* Cells a placed cat already rules out */
 .cell.is-blocked::after {
@@ -547,7 +553,7 @@ svg { display: block; }
 
 .toolbar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
 .tool {
@@ -862,8 +868,18 @@ legend { font-family: var(--font-display); font-variation-settings: 'SOFT' 100; 
 .lose-paws { display: flex; justify-content: center; gap: 8px; }
 .lose-paws .paw { width: 40px; height: 40px; }
 
-.theme-choice { margin-bottom: 14px; }
-.theme-choice legend { font-family: var(--font-body); font-size: 1rem; margin-bottom: 8px; }
+.settings-group { padding: 4px 0 10px; border-top: 2px dashed color-mix(in srgb, var(--ink) 18%, transparent); }
+.settings-group:first-of-type { border-top: 0; }
+.settings-group h3 {
+  margin: 10px 0 2px;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+.theme-choice { padding: 10px 0; }
+.theme-choice__label { display: block; font-weight: 700; margin-bottom: 8px; }
 .theme-choice small { display: block; margin-top: 6px; color: var(--ink-soft); }
 .chips--three { grid-template-columns: repeat(3, 1fr); }
 .chips--three .chip span { min-height: 44px; }
