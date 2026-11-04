@@ -13,6 +13,8 @@ const DEFAULTS = {
   completed: {},
   quickPlaySolved: 0,
   seenRules: false,
+  // The player closed the "add to home screen" banner on the home screen.
+  installBannerHidden: false,
   settings: {
     // Shade cells that a placed cat already rules out.
     shadeBlocked: true,
@@ -54,6 +56,15 @@ export function settings() {
 
 export function updateSetting(key, value) {
   state.settings[key] = value;
+  write();
+}
+
+export function installBannerHidden() {
+  return state.installBannerHidden;
+}
+
+export function hideInstallBanner() {
+  state.installBannerHidden = true;
   write();
 }
 

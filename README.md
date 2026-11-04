@@ -18,8 +18,14 @@ cd ~/Documents/workspace/laladoku
 python3 -m http.server 8765
 ```
 
-Open <http://127.0.0.1:8765/>. To install on a phone, open the page in the
-browser and choose *Add to Home screen*.
+Open <http://127.0.0.1:8765/>, or play the live version at
+<https://jonathanjie.github.io/laladoku/> (GitHub Pages, deployed from `main`).
+
+**Installing:** the home screen shows a "Put Lala on your home screen" banner.
+On Android and desktop Chrome or Edge, its Install button opens the browser's
+install dialog. On iPhone and iPad, Apple does not let sites open that dialog,
+so the button shows the steps: Share, then *Add to Home Screen*. The banner
+hides once the game runs as an installed app, and Settings keeps the option.
 
 | Input | Effect |
 | --- | --- |
@@ -153,6 +159,7 @@ js/generator.js            seeded level generator
 js/quickplay-worker.js     Quick Play generation off the main thread
 js/levels.js               level bank loader
 js/store.js                local progress and settings
+js/install.js              add-to-home-screen prompt and steps
 js/lala.js                 Lala and the icons, in SVG
 levels/                    generated level bank and notebook examples
 scripts/build_levels.mjs   builds the level bank

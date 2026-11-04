@@ -16,6 +16,7 @@ import { BoardView } from './board-view.js';
 import { TECHNIQUES, explainHint } from './explain.js';
 import { lalaFace, pawIcon, ICONS } from './lala.js';
 import * as store from './store.js';
+import { installMode, promptInstall, onInstallChange } from './install.js';
 
 const app = document.getElementById('app');
 const sheet = document.getElementById('sheet');
@@ -32,6 +33,8 @@ const QUICK_TIERS = [
 
 let activeGame = null;
 let routeToken = 0;
+/** Stops the home screen from listening for install changes once we leave it. */
+let stopInstallWatch = null;
 /** Quick Play's generator thread, started on first use. */
 let quickWorker = null;
 /** The Techniques notebook's example boards, fetched on first visit. */
@@ -49,6 +52,8 @@ async function route() {
   const token = ++routeToken;
   activeGame?.destroy();
   activeGame = null;
+  stopInstallWatch?.();
+  stopInstallWatch = null;
   closeSheet();
 
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -108,13 +113,88 @@ async function showHome(token) {
         <a class="tile" href="#/learn">${ICONS.book}<b>Techniques</b><span>Lala’s notebook of tricks</span></a>
         <button class="tile" data-action="settings">${ICONS.gear}<b>Settings</b><span>${stars} ★ collected</span></button>
       </div>
+      <div class="install-slot"></div>
     </section>`;
 
   app.querySelector('[data-action="settings"]').addEventListener('click', showSettings);
+  const installSlot = app.querySelector('.install-slot');
+  renderInstallBanner(installSlot);
+  // Chrome may offer installing a moment after the page loads.
+  stopInstallWatch = onInstallChange(() => renderInstallBanner(installSlot));
   if (!store.hasSeenRules()) {
     showRules();
     store.markRulesSeen();
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Add to home screen
+ * ------------------------------------------------------------------ */
+
+function renderInstallBanner(slot) {
+  const mode = installMode();
+  if (mode === 'installed' || store.installBannerHidden()) {
+    slot.innerHTML = '';
+    return;
+  }
+  slot.innerHTML = `
+    <aside class="install" aria-label="Install Laladoku">
+      <img class="install__icon" src="icons/icon-192.png" alt="" width="56" height="56">
+      <div class="install__text">
+        <b>Put Lala on your home screen</b>
+        <span>Full screen, plays offline, one tap away.</span>
+      </div>
+      <button class="btn btn--primary install__go" data-install>${mode === 'prompt' ? 'Install' : 'Show me how'}</button>
+      <button class="icon-btn install__close" data-hide-install aria-label="Hide this">${ICONS.close}</button>
+    </aside>`;
+  slot.querySelector('[data-install]').addEventListener('click', startInstall);
+  slot.querySelector('[data-hide-install]').addEventListener('click', () => {
+    store.hideInstallBanner();
+    slot.innerHTML = '';
+  });
+}
+
+async function startInstall() {
+  const mode = installMode();
+  if (mode === 'prompt') await promptInstall();
+  else if (mode === 'apple') showAppleInstallSteps();
+  else if (mode === 'menu') showMenuInstallSteps();
+}
+
+function installStepsHtml(steps) {
+  return `<ol class="install-steps">${steps.map(([icon, text]) => `
+    <li><span class="install-steps__icon">${icon}</span><span>${text}</span></li>`).join('')}
+  </ol>`;
+}
+
+function showAppleInstallSteps() {
+  openSheet({
+    mood: 'wink',
+    html: `
+      <h2 id="sheet-title" class="sheet__title">Add Lala to your Home Screen</h2>
+      <p class="sheet__detail">iPhone and iPad install web apps from the Share menu.</p>
+      ${installStepsHtml([
+        [ICONS.share, 'Tap the <b>Share</b> button. In Safari it\u2019s in the toolbar; if you don\u2019t see it, tap <b>\u2022\u2022\u2022</b> first. In Chrome it\u2019s in the address bar.'],
+        [ICONS.addSquare, 'Scroll down the list and tap <b>Add to Home Screen</b>.'],
+        [lalaFace({ mood: 'happy' }), 'Tap <b>Add</b>. Lala\u2019s icon appears on your Home Screen, and the game opens full screen and works offline.'],
+      ])}
+      <div class="sheet__actions"><button class="btn btn--primary" data-close>Got it</button></div>`,
+  });
+}
+
+function showMenuInstallSteps() {
+  openSheet({
+    mood: 'wink',
+    html: `
+      <h2 id="sheet-title" class="sheet__title">Install Laladoku</h2>
+      <p class="sheet__detail">Your browser keeps this in its menu.</p>
+      ${installStepsHtml([
+        [ICONS.kebab, 'Open the browser menu: <b>\u22ee</b> or <b>\u2022\u2022\u2022</b>, usually at the top or bottom of the screen.'],
+        [ICONS.addSquare, 'Choose <b>Install app</b> or <b>Add to Home screen</b>.'],
+        [lalaFace({ mood: 'happy' }), 'Confirm. Lala\u2019s icon appears with your other apps, and the game works offline.'],
+      ])}
+      <div class="sheet__actions"><button class="btn btn--primary" data-close>Got it</button></div>`,
+  });
 }
 
 /* ------------------------------------------------------------------ *
@@ -487,12 +567,17 @@ function showSettings() {
         ${toggle('haptics', 'Vibration', 'A small buzz on moves and slips, where supported.')}
       </div>
       <div class="sheet__actions">
+        ${installMode() === 'installed' ? '' : '<button class="btn btn--quiet" data-install>Add to Home Screen</button>'}
         <button class="btn btn--quiet" data-reset>Reset progress</button>
         <button class="btn btn--primary" data-close>Done</button>
       </div>`,
   });
   sheet.querySelectorAll('[data-setting]').forEach((input) => {
     input.addEventListener('change', () => store.updateSetting(input.dataset.setting, input.checked));
+  });
+  sheet.querySelector('[data-install]')?.addEventListener('click', () => {
+    closeSheet();
+    startInstall();
   });
   sheet.querySelector('[data-reset]').addEventListener('click', (e) => {
     if (e.target.dataset.confirm) {
