@@ -18,6 +18,8 @@ const DEFAULTS = {
     shadeBlocked: true,
     haptics: true,
     showTimer: true,
+    sound: true,
+    music: true,
   },
   // One board in progress at a time: { key, marks, lives, hintsLeft, elapsed, history }.
   save: null,

@@ -16,6 +16,7 @@ import { BoardView } from './board-view.js';
 import { TECHNIQUES, explainHint } from './explain.js';
 import { lalaFace, pawIcon, ICONS } from './lala.js';
 import * as store from './store.js';
+import { audio } from './audio.js';
 
 const app = document.getElementById('app');
 const sheet = document.getElementById('sheet');
@@ -42,6 +43,9 @@ let examplesPromise = null;
  * ------------------------------------------------------------------ */
 
 window.addEventListener('hashchange', route);
+// Browsers only allow sound after the player interacts with the page.
+document.addEventListener('pointerdown', () => audio.unlock(), { capture: true });
+document.addEventListener('keydown', () => audio.unlock(), { capture: true });
 route();
 registerServiceWorker();
 
@@ -447,11 +451,14 @@ function showWin(result, { note = '', next, onNext, nextLabel, back }) {
         <button class="btn btn--quiet" data-back>Back</button>
       </div>`,
   });
+  // Stars pop in at 360, 520 and 680 ms (see .star--on in app.css); ring as each lands.
+  audio.stars(result.stars, 0.45, 0.16);
   sheet.querySelector('[data-next]').addEventListener('click', () => (onNext ? onNext() : go(next)));
   sheet.querySelector('[data-back]').addEventListener('click', () => go(back));
 }
 
 function showLose(retryHash, key) {
+  audio.lose();
   openSheet({
     mood: 'sleepy',
     dismissable: false,
@@ -482,6 +489,8 @@ function showSettings() {
     html: `
       <h2 id="sheet-title" class="sheet__title">Settings</h2>
       <div class="toggles">
+        ${toggle('sound', 'Sound effects', 'Ticks, chimes and Lala\u2019s little chirps.')}
+        ${toggle('music', 'Music', 'A calm music box that never plays the same tune twice.')}
         ${toggle('shadeBlocked', 'Shade ruled-out cells', 'Dot the cells a placed cat already rules out.')}
         ${toggle('showTimer', 'Show timer', 'The clock never limits you; it only keeps your best time.')}
         ${toggle('haptics', 'Vibration', 'A small buzz on moves and slips, where supported.')}
@@ -492,7 +501,10 @@ function showSettings() {
       </div>`,
   });
   sheet.querySelectorAll('[data-setting]').forEach((input) => {
-    input.addEventListener('change', () => store.updateSetting(input.dataset.setting, input.checked));
+    input.addEventListener('change', () => {
+      store.updateSetting(input.dataset.setting, input.checked);
+      if (input.dataset.setting === 'music') audio.setMusic(input.checked);
+    });
   });
   sheet.querySelector('[data-reset]').addEventListener('click', (e) => {
     if (e.target.dataset.confirm) {
