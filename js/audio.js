@@ -295,27 +295,97 @@ export class SoundKit {
  * Background music
  * ------------------------------------------------------------------ */
 
-/** Chord progressions in C major: each chord is [bass root, ...pad notes] in MIDI. */
-const PROGRESSIONS = [
-  // I - vi - IV - V
-  [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]],
-  // IV - I - V - vi
-  [[41, 57, 60, 65], [48, 55, 60, 64], [43, 55, 59, 62], [45, 57, 60, 64]],
-  // vi - IV - I - V
-  [[45, 57, 60, 64], [41, 57, 60, 65], [48, 55, 60, 64], [43, 55, 59, 62]],
+/*
+ * The music follows a small piece of song-writing craft:
+ *
+ *   Form      AABA, 8 bars per section, 32 bars in all (about 1:47). After
+ *             each form, new motifs and chords are drawn.
+ *   Period    each 8-bar section is a question and an answer. The question
+ *             phrase ends on G (the V chord), which sounds unfinished; the
+ *             answer starts the same way and ends G -> C (V -> I), with the
+ *             melody stepping home to C. Section B travels away and ends on
+ *             G, which leads back into the last A.
+ *   Phrase    4 bars: the motif, the motif one scale step higher or lower
+ *             (a "sequence"), the motif upside down, then the cadence note.
+ *   Harmony   strong beats (1 and 3) land on a note of the current chord;
+ *             the bass plays the chord's root, then its fifth.
+ *   Scale     the melody uses only C major pentatonic (C D E G A), which has
+ *             no half steps and so never clashes with any chord in the key.
+ */
+
+/**
+ * Chords in C major. `bass` is the bass root, `pad` the held chord, and
+ * `tones` the pitch classes (0 = C, 2 = D, ...) a melody may land on.
+ */
+const CHORDS = {
+  C: { bass: 48, pad: [60, 64, 67], tones: [0, 4, 7] },
+  Dm: { bass: 50, pad: [57, 62, 65], tones: [2, 5, 9] },
+  Em: { bass: 52, pad: [55, 59, 64], tones: [4, 7, 11] },
+  F: { bass: 41, pad: [57, 60, 65], tones: [5, 9, 0] },
+  G: { bass: 43, pad: [55, 59, 62], tones: [7, 11, 2] },
+  Am: { bass: 45, pad: [57, 60, 64], tones: [9, 0, 4] },
+};
+
+/** Question phrases end on G (V): the music pauses, unresolved. */
+const QUESTIONS = [['C', 'Am', 'F', 'G'], ['C', 'F', 'Dm', 'G'], ['Am', 'F', 'C', 'G'], ['F', 'C', 'Dm', 'G']];
+/** Answer phrases end G -> C (V -> I): the music comes home. */
+const ANSWERS = [['C', 'Am', 'G', 'C'], ['F', 'Dm', 'G', 'C'], ['Am', 'F', 'G', 'C'], ['C', 'F', 'G', 'C']];
+/** The bridge (section B) starts away from home ... */
+const BRIDGE_QUESTIONS = [['F', 'G', 'Em', 'Am'], ['Dm', 'Em', 'F', 'Am']];
+/** ... and ends on G, so the last A feels like a return. */
+const BRIDGE_ANSWERS = [['F', 'Dm', 'Em', 'G'], ['Dm', 'Em', 'F', 'G']];
+
+const FORM = ['A', 'A', 'B', 'A'];
+const BARS_PER_PHRASE = 4;
+const BARS_PER_PERIOD = 8;
+const BARS_PER_FORM = FORM.length * BARS_PER_PERIOD;
+
+/** Melody notes: C major pentatonic from G4 to E6. */
+export const MELODY_NOTES = [67, 69, 72, 74, 76, 79, 81, 84, 86, 88];
+const PENTATONIC_CLASSES = [0, 2, 4, 7, 9];
+
+/**
+ * One-bar rhythms, as eighth notes (1 = a note starts). Every rhythm starts
+ * on the downbeat and leaves a breath at the end of the bar.
+ */
+const RHYTHMS = [
+  [1, 0, 1, 0, 1, 0, 0, 0], // three even steps, then a breath
+  [1, 0, 0, 1, 1, 0, 1, 0], // long-short: a gentle lilt
+  [1, 1, 1, 0, 1, 0, 0, 0], // a quick run into beat 3
+  [1, 0, 1, 1, 1, 0, 0, 0],
+  [1, 0, 0, 0, 1, 0, 1, 0], // sparse, for calm phrases
+  [1, 0, 1, 0, 1, 0, 1, 0], // walking quarter notes
 ];
-/** Melody notes: C major pentatonic, C5 to E6. */
-const MELODY_NOTES = [72, 74, 76, 79, 81, 84, 86, 88];
+/** Melodic moves in scale steps; mostly small steps, the odd leap. */
+const MOVES = [-1, -1, 1, 1, -2, 2, 0];
+/** How loud each bar of a phrase is: a small swell toward bar 3. */
+const PHRASE_ARCH = [0.92, 1, 1.08, 0.95];
+
 const BEATS_PER_MINUTE = 72;
 const EIGHTHS_PER_BAR = 8;
+const STRONG_STEPS = [0, 4];
+
+export const pitchClass = (midi) => ((midi % 12) + 12) % 12;
+const pick = (random, list) => list[Math.floor(random() * list.length)];
+const clampIndex = (i) => Math.min(MELODY_NOTES.length - 1, Math.max(0, i));
+
+/** The melody note nearest to `index` whose pitch class is in `classes`. */
+function nearestIndexIn(index, classes) {
+  for (let distance = 0; distance < MELODY_NOTES.length; distance++) {
+    for (const candidate of [index - distance, index + distance]) {
+      if (candidate < 0 || candidate >= MELODY_NOTES.length) continue;
+      if (classes.includes(pitchClass(MELODY_NOTES[candidate]))) return candidate;
+    }
+  }
+  return index;
+}
 
 export class MusicBox {
   constructor(mixer, random = Math.random) {
     this.mixer = mixer;
     this.random = random;
-    this.melodyIndex = 2;
-    this.progression = PROGRESSIONS[0];
-    this.density = 0.5;
+    this.melodyIndex = 3;
+    this.form = null;
   }
 
   get eighth() {
@@ -326,19 +396,110 @@ export class MusicBox {
     return this.eighth * EIGHTHS_PER_BAR;
   }
 
-  /** Schedule bar number `bar` (counting from 0) to start at time `t`. */
+  /** A motif: one bar of rhythm, the moves between its notes, and where it starts. */
+  newMotif(startIndex) {
+    const rhythm = pick(this.random, RHYTHMS);
+    const onsets = rhythm.reduce((count, hit) => count + hit, 0);
+    const moves = Array.from({ length: onsets - 1 }, () => pick(this.random, MOVES));
+    return { rhythm, moves, startIndex, shift: pick(this.random, [-1, 1, 1, 2]) };
+  }
+
+  /** Draw the motifs and chords for the next 32 bars. */
+  newForm() {
+    this.form = {
+      A: {
+        motif: this.newMotif(pick(this.random, [3, 4])),
+        question: pick(this.random, QUESTIONS),
+        answer: pick(this.random, ANSWERS),
+      },
+      B: {
+        motif: this.newMotif(pick(this.random, [5, 6])),
+        question: pick(this.random, BRIDGE_QUESTIONS),
+        answer: pick(this.random, BRIDGE_ANSWERS),
+      },
+    };
+  }
+
+  /**
+   * Compose bar number `bar` (counting from 0). Returns a plan, so the
+   * music can be checked without playing it:
+   *   { section, isAnswer, barInPhrase, chord, bass: [{ step, midi, decay }],
+   *     melody: [{ step, midi, gain, decay }] }
+   */
+  composeBar(bar) {
+    const formBar = bar % BARS_PER_FORM;
+    if (formBar === 0 || !this.form) this.newForm();
+
+    const section = FORM[Math.floor(formBar / BARS_PER_PERIOD)];
+    const withinPeriod = formBar % BARS_PER_PERIOD;
+    const isAnswer = withinPeriod >= BARS_PER_PHRASE;
+    const barInPhrase = withinPeriod % BARS_PER_PHRASE;
+    const { motif, question, answer } = this.form[section];
+    const chordName = (isAnswer ? answer : question)[barInPhrase];
+    const chord = CHORDS[chordName];
+    const arch = PHRASE_ARCH[barInPhrase];
+    const isCadence = barInPhrase === BARS_PER_PHRASE - 1;
+    const goesHome = section === 'A' && isAnswer;
+
+    const melody = [];
+    const playNote = (step, index, { gain, decay = 1.6 }) => {
+      this.melodyIndex = index;
+      melody.push({ step, midi: MELODY_NOTES[index], gain: gain * arch, decay });
+    };
+
+    if (!isCadence) {
+      // Bar 1: the motif. Bar 2: the motif, shifted a step (a sequence).
+      // Bar 3: the motif upside down, carrying on from where bar 2 ended.
+      const inverted = barInPhrase === 2;
+      let index = barInPhrase === 0 ? motif.startIndex
+        : barInPhrase === 1 ? motif.startIndex + motif.shift
+          : this.melodyIndex;
+      let moveNumber = 0;
+      motif.rhythm.forEach((hit, step) => {
+        if (!hit) return;
+        if (moveNumber > 0) index += (inverted ? -1 : 1) * motif.moves[moveNumber - 1];
+        moveNumber++;
+        index = clampIndex(index);
+        const strong = STRONG_STEPS.includes(step);
+        // Strong beats sit on a note of the chord, so the tune agrees with
+        // the harmony where the ear listens hardest.
+        if (strong) index = nearestIndexIn(index, chord.tones);
+        playNote(step, index, { gain: strong ? 0.2 : 0.13 });
+      });
+    } else {
+      // The cadence: one long note on the downbeat. Coming home, it is C;
+      // otherwise the nearest note of the chord, which sounds open.
+      const goal = nearestIndexIn(this.melodyIndex, goesHome ? [0] : chord.tones);
+      playNote(0, goal, { gain: 0.2, decay: 2.6 });
+      // A question leads on with a soft pickup note into the next phrase.
+      if (!goesHome) {
+        const nextStart = isAnswer ? this.nextSectionStart(formBar) : motif.startIndex;
+        playNote(6, clampIndex(nextStart + (nextStart > goal ? -1 : 1)), { gain: 0.11 });
+      }
+    }
+
+    // Bass: the root on beat 1 and the fifth on beat 3; a cadence holds the root.
+    const bass = isCadence
+      ? [{ step: 0, midi: chord.bass, decay: 2.4 }]
+      : [{ step: 0, midi: chord.bass, decay: 1.4 }, { step: 4, midi: chord.bass + 7, decay: 1.2 }];
+
+    return { section, isAnswer, barInPhrase, chord: chordName, pad: chord.pad, bass, melody };
+  }
+
+  /** Where the next section's motif starts, for a pickup leading into it. */
+  nextSectionStart(formBar) {
+    const nextPeriod = Math.floor(formBar / BARS_PER_PERIOD) + 1;
+    const nextSection = FORM[nextPeriod % FORM.length];
+    return this.form[nextSection].motif.startIndex;
+  }
+
+  /** Compose bar `bar` and schedule it to start at time `t`. */
   scheduleBar(bar, t) {
     const { mixer } = this;
-    // Every four bars, pick a progression and how busy the melody is, so the
-    // music breathes: some phrases sing, some only hum.
-    if (bar % 4 === 0) {
-      this.progression = PROGRESSIONS[Math.floor(this.random() * PROGRESSIONS.length)];
-      this.density = [0.25, 0.45, 0.6][Math.floor(this.random() * 3)];
-    }
-    const [root, ...chord] = this.progression[bar % 4];
+    const plan = this.composeBar(bar);
 
     // Pad: the chord with a slow attack, as softly detuned pairs for warmth.
-    for (const note of chord) {
+    for (const note of plan.pad) {
       for (const cents of [-6, 6]) {
         const osc = tone(mixer, t, {
           freq: hz(note), type: 'triangle', gain: 0.035, attack: 0.9,
@@ -347,27 +508,20 @@ export class MusicBox {
         osc.detune.value = cents;
       }
     }
-
-    // Bass: the root on beats one and three.
-    for (const step of [0, 4]) {
-      tone(mixer, t + step * this.eighth, {
-        freq: hz(root), gain: 0.22, attack: 0.02, decay: 1.4, dest: mixer.music,
+    for (const note of plan.bass) {
+      tone(mixer, t + note.step * this.eighth, {
+        freq: hz(note.midi), gain: 0.22, attack: 0.02, decay: note.decay, dest: mixer.music,
       });
     }
-
-    // Melody: music-box notes that mostly step to a neighbouring note.
-    for (let step = 0; step < EIGHTHS_PER_BAR; step++) {
-      const strongBeat = step % 2 === 0;
-      const chance = strongBeat ? this.density : this.density * 0.4;
-      if (this.random() >= chance) continue;
-      const move = [-2, -1, -1, 0, 1, 1, 2][Math.floor(this.random() * 7)];
-      this.melodyIndex = Math.min(MELODY_NOTES.length - 1, Math.max(0, this.melodyIndex + move));
-      bell(mixer, t + step * this.eighth, hz(MELODY_NOTES[this.melodyIndex]), {
-        gain: strongBeat ? 0.2 : 0.13, decay: 1.6, dest: mixer.music, reverb: 0.55,
+    for (const note of plan.melody) {
+      bell(mixer, t + note.step * this.eighth, hz(note.midi), {
+        gain: note.gain, decay: note.decay, dest: mixer.music, reverb: 0.55,
       });
     }
   }
 }
+
+export { PENTATONIC_CLASSES, CHORDS };
 
 /* ------------------------------------------------------------------ *
  * Live audio, driven by settings

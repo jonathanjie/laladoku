@@ -70,10 +70,18 @@ game ships no audio files and plays offline.
   notes climb a C major pentatonic scale, so a solve plays a little tune), a
   soft bonk for a wrong cat, a chime for hints, a win arpeggio with a "mrrp"
   from Lala, a bell per star, and a sleepy fall when the paws run out.
-- **Music:** a calm generative music box in C major at 72 BPM: pad chords, a
-  soft bass and a melody that mostly steps between neighbouring pentatonic
-  notes. Every four bars it picks a new progression and melody density, so
-  it never repeats exactly. It ducks under the win jingle.
+- **Music:** a calm generative music box in C major at 72 BPM, written by
+  rules from song-writing rather than at random:
+  - **Form AABA** of 8-bar sections (32 bars, about 1:47); each form draws
+    new motifs and chords, so it never repeats exactly.
+  - **Question and answer:** each section's first phrase ends open on G (V);
+    the second ends G -> C (V -> I) with the melody stepping home to C.
+  - **Motifs:** a one-bar rhythm and contour, repeated one step higher or
+    lower, then turned upside down, then a long cadence note; a soft pickup
+    note leads into the next phrase.
+  - **Harmony:** strong beats land on notes of the current chord; the melody
+    stays in C major pentatonic; the bass plays root then fifth.
+  - It ducks under the win jingle. `test/music.test.mjs` checks these rules.
 - Sound starts after the first tap (a browser rule), pauses while the app is
   hidden, and both layers can be switched off in Settings.
 
@@ -154,6 +162,7 @@ holds a slice of the campaign:
 ```bash
 node test/engine.test.mjs
 node test/levels.test.mjs
+node test/music.test.mjs
 ```
 
 - `engine.test.mjs` generates boards from fixed seeds and checks: the
