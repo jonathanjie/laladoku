@@ -1,0 +1,126 @@
+{
+ "version": 2,
+ "total": 442,
+ "chunkSize": 100,
+ "sizes": {
+  "5": 12,
+  "6": 20,
+  "7": 60,
+  "8": 90,
+  "9": 130,
+  "10": 130
+ },
+ "chapters": [
+  {
+   "name": "First Steps",
+   "size": 5,
+   "maxRank": 2,
+   "start": 0,
+   "count": 12
+  },
+  {
+   "name": "Sunny Window",
+   "size": 6,
+   "maxRank": 2,
+   "start": 12,
+   "count": 20
+  },
+  {
+   "name": "Yarn Basket",
+   "size": 7,
+   "maxRank": 3,
+   "start": 32,
+   "count": 30
+  },
+  {
+   "name": "Garden Path",
+   "size": 7,
+   "maxRank": 4,
+   "start": 62,
+   "count": 30
+  },
+  {
+   "name": "Rooftops",
+   "size": 8,
+   "maxRank": 3,
+   "start": 92,
+   "count": 40
+  },
+  {
+   "name": "Night Market",
+   "size": 8,
+   "maxRank": 4,
+   "start": 132,
+   "count": 50
+  },
+  {
+   "name": "Old Library",
+   "size": 9,
+   "maxRank": 4,
+   "start": 182,
+   "count": 60
+  },
+  {
+   "name": "Harbour Lights",
+   "size": 10,
+   "maxRank": 4,
+   "start": 242,
+   "count": 60
+  },
+  {
+   "name": "Moon Garden",
+   "size": 9,
+   "maxRank": 5,
+   "start": 302,
+   "count": 40
+  },
+  {
+   "name": "Starry Attic",
+   "size": 10,
+   "maxRank": 5,
+   "start": 342,
+   "count": 40
+  },
+  {
+   "name": "Lala’s Dream",
+   "size": 9,
+   "maxRank": 5,
+   "start": 382,
+   "count": 30
+  },
+  {
+   "name": "Cat Constellation",
+   "size": 10,
+   "maxRank": 5,
+   "start": 412,
+   "count": 30
+  }
+ ],
+ "chunks": [
+  {
+   "file": "levels/chunk-0.json",
+   "start": 0,
+   "count": 100
+  },
+  {
+   "file": "levels/chunk-1.json",
+   "start": 100,
+   "count": 100
+  },
+  {
+   "file": "levels/chunk-2.json",
+   "start": 200,
+   "count": 100
+  },
+  {
+   "file": "levels/chunk-3.json",
+   "start": 300,
+   "count": 100
+  },
+  {
+   "file": "levels/chunk-4.json",
+   "start": 400,
+   "count": 42
+  }
+ ]
+}

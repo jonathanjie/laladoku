@@ -1,0 +1,6 @@
+# Scratch work: benchmarks, screenshots, trial builds (see README).
+work/
+# Local editor and agent settings.
+.claude/
+.playwright-mcp/
+.DS_Store
