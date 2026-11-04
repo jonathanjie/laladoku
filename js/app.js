@@ -17,6 +17,7 @@ import { TECHNIQUES, explainHint } from './explain.js';
 import { lalaFace, pawIcon, ICONS } from './lala.js';
 import * as store from './store.js';
 import { installMode, promptInstall, onInstallChange } from './install.js';
+import { applyTheme } from './theme.js';
 
 const app = document.getElementById('app');
 const sheet = document.getElementById('sheet');
@@ -44,6 +45,7 @@ let examplesPromise = null;
  * Routing
  * ------------------------------------------------------------------ */
 
+applyTheme(store.settings().theme);
 window.addEventListener('hashchange', route);
 route();
 registerServiceWorker();
@@ -493,7 +495,8 @@ function showRules() {
       <h2 id="sheet-title" class="sheet__title">How to play</h2>
       ${rulesHtml()}
       <ul class="howto">
-        <li><b>Tap</b> a cell once to cross it out, twice to place Lala.</li>
+        <li><b>Tap</b> a cell to cross it out; tap a cross to clear it.</li>
+        <li><b>Double-tap</b> quickly to place Lala.</li>
         <li><b>Drag</b> across cells to cross out many at once.</li>
         <li>A cat on a wrong cell costs a paw. You have <b>${STARTING_LIVES} paws</b> and <b>${STARTING_HINTS} hints</b> per board.</li>
         <li>Every board has one answer and can be solved by logic alone. Stuck? The <a href="#/learn">Techniques notebook</a> shows how.</li>
@@ -561,6 +564,14 @@ function showSettings() {
   openSheet({
     html: `
       <h2 id="sheet-title" class="sheet__title">Settings</h2>
+      <fieldset class="theme-choice">
+        <legend>Theme</legend>
+        <div class="chips chips--three">
+          ${[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([value, label]) => `
+            <label class="chip"><input type="radio" name="theme" value="${value}" ${s.theme === value ? 'checked' : ''}><span>${label}</span></label>`).join('')}
+        </div>
+        <small>Auto matches your phone\u2019s light or dark mode.</small>
+      </fieldset>
       <div class="toggles">
         ${toggle('shadeBlocked', 'Shade ruled-out cells', 'Dot the cells a placed cat already rules out.')}
         ${toggle('showTimer', 'Show timer', 'The clock never limits you; it only keeps your best time.')}
@@ -574,6 +585,12 @@ function showSettings() {
   });
   sheet.querySelectorAll('[data-setting]').forEach((input) => {
     input.addEventListener('change', () => store.updateSetting(input.dataset.setting, input.checked));
+  });
+  sheet.querySelectorAll('input[name="theme"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      store.updateSetting('theme', input.value);
+      applyTheme(input.value);
+    });
   });
   sheet.querySelector('[data-install]')?.addEventListener('click', () => {
     closeSheet();

@@ -29,9 +29,10 @@ hides once the game runs as an installed app, and Settings keeps the option.
 
 | Input | Effect |
 | --- | --- |
-| Tap a cell | Empty, then cross, then cat, then empty again |
+| Tap a cell | Toggle a cross (tapping a cat lifts it off) |
+| Double-tap a cell quickly | Place Lala |
 | Drag across cells | Cross out many cells (or erase crosses, if the drag starts on one) |
-| Arrow keys, Space/Enter | Move and cycle a cell |
+| Arrow keys, Space/Enter | Move, toggle a cross (press twice quickly for a cat) |
 | X, C, Backspace | Cross, cat, clear |
 | Ctrl/Cmd+Z, H | Undo, hint |
 

@@ -2,7 +2,8 @@
  * The game screen: one board, its input, lives, hints and coaching.
  *
  * Input
- *   tap a cell        empty -> cross -> cat -> empty
+ *   tap a cell        toggle a cross (empty <-> cross); a cat is lifted off
+ *   double-tap        place a cat (the first tap of the pair is undone)
  *   drag across cells paint crosses (or erase them, if the drag starts on one)
  *   keyboard          arrows move, Space/Enter cycles, X cross, C cat,
  *                     Backspace clears, Ctrl/Cmd+Z undo, H hint
@@ -21,6 +22,8 @@ import { lalaFace, pawIcon, ICONS } from './lala.js';
 import { settings, saveBoard, loadBoard, clearBoard } from './store.js';
 
 export const STARTING_LIVES = 3;
+/** Two taps on one cell within this time count as a double tap. */
+const DOUBLE_TAP_MS = 320;
 export const STARTING_HINTS = 2;
 
 /** 3 stars for a clean solve, 2 for at most two slips or hints, else 1. */
@@ -252,11 +255,34 @@ export class Game {
     this.drag = null;
   }
 
+  /**
+   * A single tap toggles a cross, so clearing a cross can never place a cat
+   * by mistake. A quick second tap on the same cell undoes the first tap and
+   * places a cat. The first tap still acts at once, so play never lags.
+   */
   tap(r, c) {
-    const mark = this.marks[r][c];
-    if (mark === EMPTY) this.setMark(r, c, CROSS);
-    else if (mark === CROSS) this.placeCat(r, c);
-    else this.setMark(r, c, EMPTY);
+    const now = performance.now();
+    const previous = this.lastTap;
+    this.lastTap = null;
+
+    const isDoubleTap = previous && previous.r === r && previous.c === c &&
+      now - previous.time < DOUBLE_TAP_MS;
+    if (isDoubleTap) {
+      this.revertStep(previous.step);
+      if (this.marks[r][c] === CAT) this.afterChange(); // the first tap had lifted this cat
+      else this.placeCat(r, c);
+      return;
+    }
+
+    this.setMark(r, c, this.marks[r][c] === EMPTY ? CROSS : EMPTY);
+    this.lastTap = { r, c, time: now, step: this.history.at(-1) };
+  }
+
+  /** Quietly take back one step, if it is still the latest. */
+  revertStep(step) {
+    if (!step || this.history.at(-1) !== step) return;
+    this.history.pop();
+    for (const [r, c, before] of step.slice().reverse()) this.marks[r][c] = before;
   }
 
   handleKey(e) {
@@ -539,7 +565,7 @@ export class Game {
     this.tipEl.classList.remove('is-active');
     this.tipEl.innerHTML = `
       <p class="tip__reminder">${RULES_REMINDER}
-        <span class="tip__how">Tap once for ✕, twice for Lala. Drag to cross out many cells.</span>
+        <span class="tip__how">Tap for ✕, double-tap for Lala. Drag to cross out many cells.</span>
       </p>`;
   }
 }

@@ -7,7 +7,7 @@
  *
  * Bump VERSION whenever a shipped file changes, so players get the update.
  */
-const VERSION = 'laladoku-v3';
+const VERSION = 'laladoku-v4';
 const SHELL = [
   './',
   './index.html',
@@ -20,6 +20,7 @@ const SHELL = [
   './js/game.js',
   './js/generator.js',
   './js/install.js',
+  './js/theme.js',
   './js/lala.js',
   './js/levels.js',
   './js/quickplay-worker.js',

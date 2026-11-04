@@ -50,38 +50,38 @@
   --ease-pop: cubic-bezier(.3, 1.6, .5, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --paper: #1e1a22;
-    --paper-2: #2a2430;
-    --card: #2d2733;
-    --ink: #f4e8da;
-    --ink-soft: #b8a898;
-    --accent: #f2944a;
-    --accent-deep: #ffb36f;
-    --accent-ink: #24150b;
-    --danger: #f0735c;
-    --shadow: 3px 3px 0 #0c0a0e;
-    --shadow-sm: 2px 2px 0 #0c0a0e;
-    --dim: rgba(30, 26, 34, 0.6);
-    --lala-ink: #2b1d15;
-    --lala-muzzle: #ffeedd;
+/* Night theme. js/theme.js sets data-theme from the player's choice
+   (Auto follows the device setting). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #1e1a22;
+  --paper-2: #2a2430;
+  --card: #2d2733;
+  --ink: #f4e8da;
+  --ink-soft: #b8a898;
+  --accent: #f2944a;
+  --accent-deep: #ffb36f;
+  --accent-ink: #24150b;
+  --danger: #f0735c;
+  --shadow: 3px 3px 0 #0c0a0e;
+  --shadow-sm: 2px 2px 0 #0c0a0e;
+  --dim: rgba(30, 26, 34, 0.6);
+  --lala-ink: #2b1d15;
+  --lala-muzzle: #ffeedd;
 
-    /* Mid-tones: dark enough to sit on the night paper, light enough that
-       the near-black region borders still stand out. */
-    --region-0: #c47c74;
-    --region-1: #c6965c;
-    --region-2: #bcae5f;
-    --region-3: #93b062;
-    --region-4: #66a77f;
-    --region-5: #58a49e;
-    --region-6: #688cbb;
-    --region-7: #8085c4;
-    --region-8: #a07ec0;
-    --region-9: #bd739c;
-    --line: #0d0b10;
-  }
+  /* Mid-tones: dark enough to sit on the night paper, light enough that
+     the near-black region borders still stand out. */
+  --region-0: #c47c74;
+  --region-1: #c6965c;
+  --region-2: #bcae5f;
+  --region-3: #93b062;
+  --region-4: #66a77f;
+  --region-5: #58a49e;
+  --region-6: #688cbb;
+  --region-7: #8085c4;
+  --region-8: #a07ec0;
+  --region-9: #bd739c;
+  --line: #0d0b10;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -861,6 +861,12 @@ legend { font-family: var(--font-display); font-variation-settings: 'SOFT' 100; 
 @keyframes star-in { from { transform: scale(0) rotate(-40deg); } }
 .lose-paws { display: flex; justify-content: center; gap: 8px; }
 .lose-paws .paw { width: 40px; height: 40px; }
+
+.theme-choice { margin-bottom: 14px; }
+.theme-choice legend { font-family: var(--font-body); font-size: 1rem; margin-bottom: 8px; }
+.theme-choice small { display: block; margin-top: 6px; color: var(--ink-soft); }
+.chips--three { grid-template-columns: repeat(3, 1fr); }
+.chips--three .chip span { min-height: 44px; }
 
 .toggles { display: grid; gap: 4px; }
 .toggle {
