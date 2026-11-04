@@ -7,13 +7,14 @@
  *
  * Bump VERSION whenever a shipped file changes, so players get the update.
  */
-const VERSION = 'laladoku-v4';
+const VERSION = 'laladoku-v5';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './css/app.css',
   './js/app.js',
+  './js/audio.js',
   './js/board-view.js',
   './js/engine.js',
   './js/explain.js',

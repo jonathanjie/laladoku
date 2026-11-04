@@ -20,6 +20,7 @@ import { BoardView } from './board-view.js';
 import { explainHint } from './explain.js';
 import { lalaFace, pawIcon, ICONS } from './lala.js';
 import { settings, saveBoard, loadBoard, clearBoard } from './store.js';
+import { audio } from './audio.js';
 
 export const STARTING_LIVES = 3;
 /** Two taps on one cell within this time count as a double tap. */
@@ -235,6 +236,7 @@ export class Game {
     if (before === after) return;
     this.marks[r][c] = after;
     drag.changes.push([r, c, before, after]);
+    audio.paint();
     this.refresh();
   }
 
@@ -345,6 +347,9 @@ export class Game {
     if (this.finished || this.marks[r][c] === mark) return;
     const before = this.marks[r][c];
     this.marks[r][c] = mark;
+    // Cats make their own sound in placeCat.
+    if (mark === CROSS) audio.cross();
+    else if (mark === EMPTY) audio.erase();
     this.commit([[r, c, before, mark]]);
   }
 
@@ -355,6 +360,7 @@ export class Game {
       return;
     }
     this.setMark(r, c, CAT);
+    audio.cat(this.marks.flat().filter((m) => m === CAT).length);
     this.view.pulse(r, c, 'is-placed');
     this.buzz(8);
     this.checkWin();
@@ -369,6 +375,7 @@ export class Game {
     this.commit([[r, c, before, CROSS]], { keepTip: true });
     this.view.pulse(r, c, 'is-wrong', 700);
     this.buzz([30, 40, 30]);
+    audio.wrong();
 
     if (this.lives <= 0) {
       this.finish();
@@ -403,6 +410,7 @@ export class Game {
     if (this.finished) return;
     const changes = this.history.pop();
     if (!changes) return;
+    audio.erase();
     for (const [r, c, before] of changes.slice().reverse()) this.marks[r][c] = before;
     this.afterChange();
   }
@@ -416,6 +424,7 @@ export class Game {
       }
     }
     for (const [r, c] of changes) this.marks[r][c] = EMPTY;
+    if (changes.length) audio.erase();
     this.commit(changes);
   }
 
@@ -426,6 +435,7 @@ export class Game {
     this.finish();
     this.dismissTip();
     this.view.celebrate();
+    audio.win();
     const result = {
       stars: starsFor(this.mistakes, this.hintsUsed),
       seconds: this.elapsed,
@@ -498,6 +508,7 @@ export class Game {
       this.refresh();
       this.persist();
     }
+    audio.hint();
     this.presentStep(step, { applyable: true });
   }
 
@@ -537,6 +548,7 @@ export class Game {
         .filter(([r, c]) => this.marks[r][c] === EMPTY)
         .map(([r, c]) => [r, c, EMPTY, CROSS]);
       for (const [r, c] of changes) this.marks[r][c] = CROSS;
+      if (changes.length) audio.cross();
       this.commit(changes);
     }
   }

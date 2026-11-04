@@ -22,6 +22,8 @@ const DEFAULTS = {
     showTimer: true,
     // 'auto' follows the device; 'light' or 'dark' override it.
     theme: 'auto',
+    sound: true,
+    music: true,
   },
   // One board in progress at a time: { key, marks, lives, hintsLeft, elapsed, history }.
   save: null,

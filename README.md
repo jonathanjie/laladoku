@@ -57,6 +57,22 @@ hides once the game runs as an installed app, and Settings keeps the option.
 - **Techniques**: Lala's notebook explains the five deductions with real
   examples.
 
+### Sound
+
+All audio is synthesized live with the Web Audio API (`js/audio.js`), so the
+game ships no audio files and plays offline.
+
+- **Effects:** a pencil tick for crosses, a music-box note for each cat (the
+  notes climb a C major pentatonic scale, so a solve plays a little tune), a
+  soft bonk for a wrong cat, a chime for hints, a win arpeggio with a "mrrp"
+  from Lala, a bell per star, and a sleepy fall when the paws run out.
+- **Music:** a calm generative music box in C major at 72 BPM: pad chords, a
+  soft bass and a melody that mostly steps between neighbouring pentatonic
+  notes. Every four bars it picks a new progression and melody density, so
+  it never repeats exactly. It ducks under the win jingle.
+- Sound starts after the first tap (a browser rule), pauses while the app is
+  hidden, and both layers can be switched off in Settings.
+
 ## The deduction ladder
 
 The hint engine (`js/engine.js`) knows five techniques. Generated levels are
@@ -153,6 +169,7 @@ sw.js                      service worker: precaches the app and level bank
 css/app.css                picture-book styling, light and dark themes
 js/app.js                  screens, routing, sheets
 js/game.js                 game screen: input, lives, hints, coaching
+js/audio.js                synthesized sound effects and generative music
 js/board-view.js           board drawing, region colours, highlights
 js/explain.js              hint text and the technique catalogue
 js/engine.js               rules, solver, candidate grid, deduction ladder
