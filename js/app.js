@@ -26,7 +26,9 @@ const sheet = document.getElementById('sheet');
 /** Levels where Lala shows the next logical step for free. */
 const COACHED_LEVELS = 3;
 
-const QUICK_SIZES = [5, 6, 7, 8];
+const QUICK_SIZES = [5, 6, 7, 8, 9, 10];
+/** From this size up, generating on a phone can take several seconds. */
+const QUICK_SLOW_SIZE = 9;
 const QUICK_TIERS = [
   { id: 'easy', name: 'Easy', note: 'Last spot and Lined up' },
   { id: 'medium', name: 'Medium', note: 'Adds Locked sets' },
@@ -39,6 +41,8 @@ let routeToken = 0;
 let stopInstallWatch = null;
 /** Quick Play's generator thread, started on first use. */
 let quickWorker = null;
+/** The Quick Play board being generated right now: { reject }, or null. */
+let quickPending = null;
 /** The Techniques notebook's example boards, fetched on first visit. */
 let examplesPromise = null;
 
@@ -60,6 +64,7 @@ async function route() {
   activeGame = null;
   stopInstallWatch?.();
   stopInstallWatch = null;
+  cancelQuickGeneration();
   closeSheet();
 
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -325,7 +330,7 @@ function showQuickSetup() {
       </header>
       <p class="lede">Lala draws a brand-new board for you. It always has exactly one answer, and you can always reach it by logic.</p>
       <form class="quick__form">
-        <fieldset><legend>Board size</legend><div class="chips">${sizeChips}</div></fieldset>
+        <fieldset><legend>Board size</legend><div class="chips chips--sizes">${sizeChips}</div></fieldset>
         <fieldset><legend>Difficulty</legend><div class="chips chips--stack">${tierChips}</div></fieldset>
         <button class="btn btn--primary btn--big" type="submit">Draw me a puzzle</button>
       </form>
@@ -342,17 +347,32 @@ function showQuickSetup() {
 
 function generateQuick(size, tier, seed) {
   quickWorker ??= new Worker(new URL('./quickplay-worker.js', import.meta.url), { type: 'module' });
+  const worker = quickWorker;
   const id = `${size}/${tier}/${seed}`;
   return new Promise((resolve, reject) => {
     const onMessage = ({ data }) => {
       if (data.id !== id) return;
-      quickWorker.removeEventListener('message', onMessage);
+      worker.removeEventListener('message', onMessage);
+      quickPending = null;
       if (data.error) reject(new Error(data.error));
       else resolve(data.level);
     };
-    quickWorker.addEventListener('message', onMessage);
-    quickWorker.postMessage({ id, size, tier, seed });
+    worker.addEventListener('message', onMessage);
+    quickPending = { reject };
+    worker.postMessage({ id, size, tier, seed });
   });
+}
+
+/**
+ * Leaving the drawing screen stops the generator. A worker cannot be
+ * interrupted mid-search, so it is closed and a fresh one starts next time.
+ */
+function cancelQuickGeneration() {
+  if (!quickPending) return;
+  quickWorker.terminate();
+  quickWorker = null;
+  quickPending.reject(new Error('cancelled'));
+  quickPending = null;
 }
 
 async function showQuickGame([, sizeText, tier, seedText], token) {
@@ -367,9 +387,16 @@ async function showQuickGame([, sizeText, tier, seedText], token) {
       <div class="drawing__lala">${lalaFace({ mood: 'wink' })}</div>
       <h1 tabindex="-1">Lala is drawing your puzzle…</h1>
       <p>Placing cats, painting colours, and checking it can be solved by logic.</p>
+      ${size >= QUICK_SLOW_SIZE ? '<p class="drawing__note">Big boards take a few seconds, a little longer on a phone.</p>' : ''}
     </section>`;
 
-  const level = await generateQuick(size, tier, seed);
+  let level;
+  try {
+    level = await generateQuick(size, tier, seed);
+  } catch {
+    if (token === routeToken) showQuickFailure(size, tier);
+    return;
+  }
   if (token !== routeToken) return;
   const tierInfo = QUICK_TIERS.find((t) => t.id === tier);
   const replay = () => go(`#/quick/${size}/${tier}/${(Math.random() * 2 ** 31) >>> 0}`);
@@ -635,6 +662,17 @@ function showSettings() {
       e.target.textContent = 'Tap again to erase all stars';
     }
   });
+}
+
+function showQuickFailure(size, tier) {
+  app.innerHTML = `
+    <section class="screen drawing">
+      <div class="drawing__lala">${lalaFace({ mood: 'sleepy' })}</div>
+      <h1 tabindex="-1">Lala smudged this one</h1>
+      <p>Not every sketch turns into a fair puzzle. She\u2019ll gladly draw another.</p>
+      <a class="btn btn--primary" href="#/quick/${size}/${tier}/${(Math.random() * 2 ** 31) >>> 0}">Draw another</a>
+      <a class="btn btn--quiet" href="#/quick">Change size</a>
+    </section>`;
 }
 
 function showError() {

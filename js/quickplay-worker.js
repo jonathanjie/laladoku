@@ -17,9 +17,12 @@ const TIERS = {
 self.onmessage = ({ data }) => {
   const { id, size, tier, seed } = data;
   const options = TIERS[tier] || TIERS.medium;
-  // A seed can fail; walk forward to the next one. Each seed is cheap at
-  // Quick Play sizes, so a handful of tries is plenty.
-  for (let attempt = 0; attempt < 12; attempt++) {
+  // A seed can fail; walk forward to the next one. Small boards almost never
+  // need more than a few tries; 9x9 and 10x10 get more room. The sequence of
+  // seeds tried depends only on the starting seed, so a shared link still
+  // gives everyone the same board.
+  const attempts = size >= 9 ? 40 : 12;
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const level = generateLevel(size, (seed + attempt * 7919) >>> 0, options);
     if (level) {
       self.postMessage({

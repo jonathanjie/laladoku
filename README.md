@@ -55,7 +55,9 @@ hides once the game runs as an installed app, and Settings keeps the option.
 - **Chapters**: 442 levels in 12 chapters, from 5×5 to 10×10, ramping from
   gentle to expert.
 - **Quick Play**: a brand-new board, generated on your device in a background
-  thread, 5×5 to 8×8, Easy / Medium / Hard.
+  thread, 5×5 to 10×10, Easy / Medium / Hard. The number in the URL is the
+  generator seed: the same link always gives the same board, so it can be
+  shared.
 - **Techniques**: Lala's notebook explains the five deductions with real
   examples.
 

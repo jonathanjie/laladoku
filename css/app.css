@@ -719,6 +719,7 @@ fieldset { border: 0; margin: 0; padding: 0; }
 legend { font-family: var(--font-display); font-variation-settings: 'SOFT' 100; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; }
 .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .chips--stack { grid-template-columns: 1fr; }
+.chips--sizes { grid-template-columns: repeat(3, 1fr); }
 .chip input { position: absolute; opacity: 0; pointer-events: none; }
 .chip span {
   display: grid;
@@ -748,6 +749,7 @@ legend { font-family: var(--font-display); font-variation-settings: 'SOFT' 100; 
 .drawing__lala { width: 140px; animation: bob 1.6s ease-in-out infinite; }
 .drawing h1 { font-size: 1.6rem; }
 .drawing p { color: var(--ink-soft); max-width: 30ch; margin: 0 0 8px; }
+.drawing__note { font-size: .88rem; font-style: italic; }
 
 /* ------------------------------------------------------------------ *
  * Techniques notebook and rules
