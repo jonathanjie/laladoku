@@ -614,7 +614,7 @@ function showSettings() {
 
       <section class="settings-group" aria-labelledby="settings-play">
         <h3 id="settings-play">Play</h3>
-        ${toggle('maybeMarks', 'Maybe-Lala marks', 'Tap a cross again to pencil in a Lala silhouette where you think she might go. Tap once more to clear it. Double-tap still places Lala.')}
+        ${toggle('maybeMarks', 'Maybe-Lala marks', 'A tap pencils in a Lala silhouette where you think she might go. Tap again for a cross, once more to clear. Drag to cross out cells. Double-tap still places Lala.')}
         ${toggle('shadeBlocked', 'Guide dots', 'Dot the cells a placed Lala already rules out: her row, column, colour and neighbours. Turn off for a purer challenge.')}
         ${toggle('haptics', 'Vibration', 'A small buzz on moves and slips, where supported.')}
       </section>

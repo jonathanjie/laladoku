@@ -29,7 +29,7 @@ hides once the game runs as an installed app, and Settings keeps the option.
 
 | Input | Effect |
 | --- | --- |
-| Tap a cell | Toggle a cross (with Maybe-Lala marks on: cross, then silhouette, then clear) |
+| Tap a cell | Toggle a cross (with Maybe-Lala marks on: silhouette, then cross, then clear) |
 | Double-tap a cell quickly | Place Lala (a correct Lala is locked in place) |
 | Drag across cells | Cross out many cells (or erase crosses, if the drag starts on one) |
 | Arrow keys, Space/Enter | Move, toggle a cross (press twice quickly for a cat) |

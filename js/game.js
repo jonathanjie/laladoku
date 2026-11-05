@@ -2,8 +2,9 @@
  * The game screen: one board, its input, lives, hints and coaching.
  *
  * Input
- *   tap a cell        toggle a cross (empty <-> cross); a cat is lifted off.
- *                     With "Maybe-Lala marks" on: empty -> cross -> maybe -> empty.
+ *   tap a cell        toggle a cross (empty <-> cross).
+ *                     With "Maybe-Lala marks" on: empty -> maybe -> cross -> empty,
+ *                     so a tap pencils in a maybe and a drag lays crosses.
  *   double-tap        place a cat (the first tap of the pair is taken back)
  *   A correct cat and the red cross left by a wrong cat are locked: no tap,
  *   drag, key or Clear changes them.
@@ -37,7 +38,6 @@ export function starsFor(mistakes, hintsUsed) {
   return slips <= 2 ? 2 : 1;
 }
 
-const RULES_REMINDER = 'One cat in every row, column and colour. Cats never touch, not even at the corners.';
 
 export class Game {
   /**
@@ -130,7 +130,7 @@ export class Game {
     el.addEventListener('pointercancel', () => this.endDrag());
     el.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    this.showReminder();
+    this.clearTip();
   }
 
   destroy() {
@@ -163,9 +163,6 @@ export class Game {
       this.coach ? 'Hint (free while Lala coaches)' : `Hint, ${this.hintsLeft} left`,
     );
     this.renderTimer();
-    // The reminder's tap instructions depend on settings, so redraw it
-    // whenever no tip is covering it.
-    if (!this.tipEl.classList.contains('is-active')) this.showReminder();
   }
 
   /** Empty cells that a placed cat already rules out. */
@@ -176,9 +173,13 @@ export class Game {
 
   /** What a single tap turns a cell into. */
   nextTapMark(mark) {
-    if (mark === EMPTY) return CROSS;
-    if (mark === CROSS && settings().maybeMarks) return MAYBE;
-    return EMPTY;
+    if (settings().maybeMarks) {
+      // Maybe first; a second tap still gives a lone cross without a drag.
+      if (mark === EMPTY) return MAYBE;
+      if (mark === MAYBE) return CROSS;
+      return EMPTY;
+    }
+    return mark === EMPTY ? CROSS : EMPTY;
   }
 
   /* ---------------------------------------------------------------- *
@@ -586,16 +587,12 @@ export class Game {
   dismissTip() {
     this.tipHint = null;
     this.view.clearHighlight();
-    this.showReminder();
+    this.clearTip();
   }
 
-  showReminder() {
+  /** Empty the tip strip. It takes no space, so the board can grow. */
+  clearTip() {
     this.tipEl.classList.remove('is-active');
-    this.tipEl.innerHTML = `
-      <p class="tip__reminder">${RULES_REMINDER}
-        <span class="tip__how">${settings().maybeMarks
-    ? 'Tap: \u2715, then maybe-Lala, then clear. Double-tap for Lala.'
-    : 'Tap for \u2715, double-tap for Lala. Drag to cross out many cells.'}</span>
-      </p>`;
+    this.tipEl.innerHTML = '';
   }
 }

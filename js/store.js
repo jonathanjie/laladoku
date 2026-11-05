@@ -18,7 +18,7 @@ const DEFAULTS = {
   settings: {
     // Guide dots: mark cells that a placed cat already rules out.
     shadeBlocked: true,
-    // Let a tap on a cross pencil in a "maybe Lala here" silhouette.
+    // A tap pencils in a "maybe Lala here" silhouette; drags lay crosses.
     maybeMarks: false,
     haptics: true,
     showTimer: true,

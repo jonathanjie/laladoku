@@ -488,22 +488,16 @@ svg { display: block; }
 .board--dense { --edge: 2px; }
 
 /* ------------------------------------------------------------------ *
- * Tip strip (rules reminder, hints, coaching)
+ * Tip strip (hints, coaching)
  * ------------------------------------------------------------------ */
 
 .tip {
-  min-height: 7.5rem;
   display: grid;
   align-items: center;
   padding: 12px 0 8px;
 }
-.tip__reminder {
-  margin: 0;
-  text-align: center;
-  font-size: .92rem;
-  color: var(--ink-soft);
-}
-.tip__how { display: block; margin-top: 4px; font-size: .82rem; opacity: .8; }
+/* With no hint or coaching to show, the strip takes no space. */
+.tip:empty { display: none; }
 
 .tip__card {
   display: grid;
