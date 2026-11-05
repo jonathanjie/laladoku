@@ -8,9 +8,10 @@
  *   double-tap        place a cat (the first tap of the pair is taken back)
  *   A correct cat and the red cross left by a wrong cat are locked: no tap,
  *   drag, key or Clear changes them.
- *   drag across cells paint crosses. A drag that starts on a cross erases
- *                     crosses instead; with Maybe-Lala marks on, it turns the
- *                     crosses it passes into maybes.
+ *   drag across cells paint crosses. A drag that starts on a mark changes
+ *                     only that kind of mark: from a cross it erases crosses
+ *                     (with Maybe-Lala marks on, it turns them into maybes);
+ *                     from a maybe it clears maybes.
  *   keyboard          arrows move, Space/Enter cycles, X cross, C cat,
  *                     M maybe, Backspace clears, H hint
  *
@@ -31,6 +32,17 @@ import { audio } from './audio.js';
 export const STARTING_LIVES = 3;
 /** Two taps on one cell within this time count as a double tap. */
 const DOUBLE_TAP_MS = 320;
+
+/**
+ * Drag modes. `to` is the mark a drag leaves; `only`, when set, limits the
+ * drag to cells holding that mark.
+ */
+const DRAG_MODES = {
+  cross: { to: CROSS },
+  eraseCrosses: { only: CROSS, to: EMPTY },
+  crossToMaybe: { only: CROSS, to: MAYBE },
+  eraseMaybes: { only: MAYBE, to: EMPTY },
+};
 export const STARTING_HINTS = 2;
 
 /** 3 stars for a clean solve, 2 for at most two slips or hints, else 1. */
@@ -240,8 +252,7 @@ export class Game {
     if (!drag.paint) {
       // The first cell of the drag decides what the drag does.
       const [sr, sc] = drag.start;
-      if (this.marks[sr][sc] !== CROSS) drag.paint = 'cross';
-      else drag.paint = settings().maybeMarks ? 'maybe' : 'erase';
+      drag.paint = this.dragModeFrom(this.marks[sr][sc]);
       this.paintCell(drag, sr, sc);
     }
     drag.last = at;
@@ -251,14 +262,23 @@ export class Game {
   paintCell(drag, r, c) {
     const before = this.marks[r][c];
     if (this.isLocked(r, c)) return;
-    // A maybe drag changes only crosses; the cells between them stay as they are.
-    if (drag.paint === 'maybe' && before !== CROSS) return;
-    const after = { cross: CROSS, maybe: MAYBE, erase: EMPTY }[drag.paint];
-    if (before === after) return;
-    this.marks[r][c] = after;
-    drag.changes.push([r, c, before, after]);
-    if (drag.paint === 'maybe') audio.maybe();
+    const mode = DRAG_MODES[drag.paint];
+    // A drag that started on a mark changes only that kind of mark; the
+    // cells between them stay as they are.
+    if (mode.only !== undefined && before !== mode.only) return;
+    if (before === mode.to) return;
+    this.marks[r][c] = mode.to;
+    drag.changes.push([r, c, before, mode.to]);
+    if (mode.to === MAYBE) audio.maybe();
+    else if (mode.to === EMPTY) audio.erase();
     else audio.paint();
+  }
+
+  /** What a drag does, decided by the mark on its first cell. */
+  dragModeFrom(mark) {
+    if (mark === CROSS) return settings().maybeMarks ? 'crossToMaybe' : 'eraseCrosses';
+    if (mark === MAYBE) return 'eraseMaybes';
+    return 'cross';
     this.refresh();
   }
 
