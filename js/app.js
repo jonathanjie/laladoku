@@ -535,7 +535,9 @@ function showRules() {
     ? '<b>Tap</b> a cell to pencil in a maybe-Lala; tap again for a cross, once more to clear.'
     : '<b>Tap</b> a cell to cross it out; tap a cross to clear it.'}</li>
         <li><b>Double-tap</b> quickly to place Lala. Once she\u2019s in the right spot, she stays.</li>
-        <li><b>Drag</b> across cells to cross out many at once.</li>
+        <li><b>Drag</b> across cells to cross out many at once. ${store.settings().maybeMarks
+    ? 'Start a drag on a cross to turn the crosses you pass into maybe-Lalas.'
+    : 'Start a drag on a cross to clear crosses.'}</li>
         <li>A cat on a wrong cell costs a paw and leaves a red \u2715 there. You have <b>${STARTING_LIVES} paws</b> and <b>${STARTING_HINTS} hints</b> per board.</li>
         <li>Every board has one answer and can be solved by logic alone. Stuck? The <a href="#/learn">Techniques notebook</a> shows how.</li>
       </ul>
@@ -630,7 +632,7 @@ function showSettings() {
 
       <section class="settings-group" aria-labelledby="settings-play">
         <h3 id="settings-play">Play</h3>
-        ${toggle('maybeMarks', 'Maybe-Lala marks', 'A tap pencils in a Lala silhouette where you think she might go. Tap again for a cross, once more to clear. Drag to cross out cells. Double-tap still places Lala.')}
+        ${toggle('maybeMarks', 'Maybe-Lala marks', 'A tap pencils in a Lala silhouette where you think she might go. Tap again for a cross, once more to clear. Drag to cross out cells; start a drag on a cross to turn crosses into silhouettes. Double-tap still places Lala.')}
         ${toggle('shadeBlocked', 'Guide dots', 'Dot the cells a placed Lala already rules out: her row, column, colour and neighbours. Turn off for a purer challenge.')}
         ${toggle('haptics', 'Vibration', 'A small buzz on moves and slips, where supported.')}
       </section>

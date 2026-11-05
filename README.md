@@ -31,7 +31,7 @@ hides once the game runs as an installed app, and Settings keeps the option.
 | --- | --- |
 | Tap a cell | Toggle a cross (with Maybe-Lala marks on: silhouette, then cross, then clear) |
 | Double-tap a cell quickly | Place Lala (a correct Lala is locked in place) |
-| Drag across cells | Cross out many cells (or erase crosses, if the drag starts on one) |
+| Drag across cells | Cross out many cells. A drag that starts on a cross erases crosses; with Maybe-Lala marks on, it turns them into silhouettes |
 | Arrow keys, Space/Enter | Move, toggle a cross (press twice quickly for a cat) |
 | X, C, Backspace | Cross, cat, clear |
 | M, H | Maybe-Lala mark, hint |

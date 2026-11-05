@@ -8,7 +8,9 @@
  *   double-tap        place a cat (the first tap of the pair is taken back)
  *   A correct cat and the red cross left by a wrong cat are locked: no tap,
  *   drag, key or Clear changes them.
- *   drag across cells paint crosses (or erase them, if the drag starts on one)
+ *   drag across cells paint crosses. A drag that starts on a cross erases
+ *                     crosses instead; with Maybe-Lala marks on, it turns the
+ *                     crosses it passes into maybes.
  *   keyboard          arrows move, Space/Enter cycles, X cross, C cat,
  *                     M maybe, Backspace clears, H hint
  *
@@ -238,7 +240,8 @@ export class Game {
     if (!drag.paint) {
       // The first cell of the drag decides what the drag does.
       const [sr, sc] = drag.start;
-      drag.paint = this.marks[sr][sc] === CROSS ? 'erase' : 'cross';
+      if (this.marks[sr][sc] !== CROSS) drag.paint = 'cross';
+      else drag.paint = settings().maybeMarks ? 'maybe' : 'erase';
       this.paintCell(drag, sr, sc);
     }
     drag.last = at;
@@ -248,11 +251,14 @@ export class Game {
   paintCell(drag, r, c) {
     const before = this.marks[r][c];
     if (this.isLocked(r, c)) return;
-    const after = drag.paint === 'cross' ? CROSS : EMPTY;
+    // A maybe drag changes only crosses; the cells between them stay as they are.
+    if (drag.paint === 'maybe' && before !== CROSS) return;
+    const after = { cross: CROSS, maybe: MAYBE, erase: EMPTY }[drag.paint];
     if (before === after) return;
     this.marks[r][c] = after;
     drag.changes.push([r, c, before, after]);
-    audio.paint();
+    if (drag.paint === 'maybe') audio.maybe();
+    else audio.paint();
     this.refresh();
   }
 
