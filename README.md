@@ -70,7 +70,8 @@ All audio is synthesized live with the Web Audio API (`js/audio.js`), so the
 game ships no audio files and plays offline.
 
 - **Effects:** a pencil tick for crosses, a music-box note for each cat (the
-  notes climb a C major pentatonic scale, so a solve plays a little tune), a
+  cats play the refrain of "Jesus Loves Me", Bradbury 1862, public domain:
+  G E G A C, then G E C E D, one note per cat), a
   soft bonk for a wrong cat, a chime for hints, a win arpeggio with a "mrrp"
   from Lala, a bell per star, and a sleepy fall when the paws run out.
 - **Music:** a calm generative music box in C major at 72 BPM, written by

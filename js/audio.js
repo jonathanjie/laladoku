@@ -24,9 +24,23 @@ export function hz(midi) {
   return 440 * 2 ** ((midi - 69) / 12);
 }
 
-const C5 = 72;
-/** C major pentatonic from C5 upward: each cat placed plays the next note. */
-const CAT_NOTES = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21].map((step) => C5 + step);
+/** MIDI note numbers for the notes the cats play. */
+const C5 = 72, D5 = 74, E5 = 76, G5 = 79, A5 = 81, C6 = 84;
+
+/**
+ * Each cat placed plays the next note of the refrain of "Jesus Loves Me"
+ * (William B. Bradbury, 1862, public domain), in C major as most hymnals
+ * print it. Two phrases of five notes cover a 10x10 board:
+ *
+ *   "Yes, Je - sus loves me"   G  E  G  A  C'
+ *   "Yes, Je - sus loves me"   G  E  C  E  D
+ *
+ * A 5x5 board plays the first phrase and ends on the high C.
+ */
+const CAT_NOTES = [
+  G5, E5, G5, A5, C6,
+  G5, E5, C5, E5, D5,
+];
 
 /* ------------------------------------------------------------------ *
  * Mixer
@@ -202,7 +216,7 @@ export class SoundKit {
     noiseBurst(this.mixer, t, { duration: 0.07, freq: 1400, q: 0.8, gain: 0.32 });
   }
 
-  /** A cat placed: the next note of the pentatonic scale, so a solve plays a tune. */
+  /** A cat placed: the next note of the refrain (CAT_NOTES), so a solve plays the tune. */
   cat(t, catNumber) {
     const index = Math.min(Math.max(catNumber - 1, 0), CAT_NOTES.length - 1);
     bell(this.mixer, t, hz(CAT_NOTES[index]), { gain: 0.32, decay: 1.1, reverb: 0.35 });
