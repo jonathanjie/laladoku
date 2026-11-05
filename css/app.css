@@ -848,6 +848,7 @@ legend { font-family: var(--font-display); font-variation-settings: 'SOFT' 100; 
 .sheet__close { position: absolute; top: 10px; right: 10px; }
 .sheet__title { text-align: center; font-size: 1.8rem; margin-bottom: 14px; }
 .sheet__detail { text-align: center; color: var(--ink-soft); margin: 8px 0; }
+.new-best { color: var(--accent-deep); }
 .sheet__note {
   text-align: center;
   padding: 10px 14px;

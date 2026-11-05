@@ -47,6 +47,9 @@ hides once the game runs as an installed app, and Settings keeps the option.
   that out first.
 - Stars: ★★★ with no slips and no hints, ★★ with up to two slips or hints in
   total, ★ otherwise.
+- Progress, stars and the best time for each level are kept on the device.
+  A replay shows the time to beat at the top and "New best!" when you win
+  faster. An unfinished board is saved as you play, so a refresh resumes it.
 - In the first three levels Lala coaches for free: she shows the next logical
   step after every move until you tell her you've got it.
 

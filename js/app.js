@@ -229,8 +229,8 @@ async function showMap(token) {
         return `<span class="lv lv--locked" aria-label="Level ${lv}, locked">${lv - ch.start}</span>`;
       }
       const stars = res ? `<i class="lv__stars" aria-hidden="true">${'★'.repeat(res.stars)}</i>` : '';
-      const label = res ? `Level ${lv}, ${res.stars} stars` : `Level ${lv}`;
-      return `<a class="lv ${res ? 'lv--done' : 'lv--next'}" href="#/play/${lv}" aria-label="${label}">${lv - ch.start}${stars}</a>`;
+      const label = res ? `Level ${lv}, ${res.stars} stars, best time ${formatTime(res.seconds)}` : `Level ${lv}`;
+      return `<a class="lv ${res ? 'lv--done' : 'lv--next'}" href="#/play/${lv}" aria-label="${label}" title="${label}">${lv - ch.start}${stars}</a>`;
     }).join('');
 
     return `
@@ -281,11 +281,13 @@ async function showLevel(levelNumber, token) {
   const board = await loadLevel(levelNumber);
   if (token !== routeToken) return;
   const { chapter, position } = chapterOf(index, levelNumber);
+  const previous = store.result(levelNumber);
+  const bestNote = previous ? ` · best ${formatTime(previous.seconds)}` : '';
 
   activeGame = new Game(app, {
     board,
     key: `level:${levelNumber}`,
-    eyebrow: `${chapter.name} · ${position}/${chapter.count}`,
+    eyebrow: `${chapter.name} · ${position}/${chapter.count}${bestNote}`,
     title: `Level ${levelNumber}`,
     coach: levelNumber <= COACHED_LEVELS,
     onExit: () => go('#/map'),
@@ -300,6 +302,7 @@ async function showLevel(levelNumber, token) {
         ? `You finished <b>${chapter.name}</b>! Next up: <b>${nextChapter.name}</b>, ${nextChapter.size}×${nextChapter.size}.`
         : '';
       showWin(result, {
+        previousBest: previous?.seconds,
         note: chapterNote,
         next: nextLevel ? `#/play/${nextLevel}` : '#/map',
         nextLabel: nextLevel ? `Level ${nextLevel}` : 'Back to chapters',
@@ -528,7 +531,9 @@ function showRules() {
       <h2 id="sheet-title" class="sheet__title">How to play</h2>
       ${rulesHtml()}
       <ul class="howto">
-        <li><b>Tap</b> a cell to cross it out; tap a cross to clear it.</li>
+        <li>${store.settings().maybeMarks
+    ? '<b>Tap</b> a cell to pencil in a maybe-Lala; tap again for a cross, once more to clear.'
+    : '<b>Tap</b> a cell to cross it out; tap a cross to clear it.'}</li>
         <li><b>Double-tap</b> quickly to place Lala. Once she\u2019s in the right spot, she stays.</li>
         <li><b>Drag</b> across cells to cross out many at once.</li>
         <li>A cat on a wrong cell costs a paw and leaves a red \u2715 there. You have <b>${STARTING_LIVES} paws</b> and <b>${STARTING_HINTS} hints</b> per board.</li>
@@ -542,11 +547,22 @@ function formatTime(seconds) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-function showWin(result, { note = '', next, onNext, nextLabel, back }) {
+/**
+ * The time line on the win sheet. On a replay it compares with the best
+ * time from before this win: "New best!" or the best time to beat.
+ */
+function timeSummary(seconds, previousBest) {
+  const time = formatTime(seconds);
+  if (previousBest == null) return time;
+  if (seconds < previousBest) return `${time} <b class="new-best">New best!</b>`;
+  return `${time} (best ${formatTime(previousBest)})`;
+}
+
+function showWin(result, { previousBest, note = '', next, onNext, nextLabel, back }) {
   const stars = [1, 2, 3].map((i) =>
     `<span class="star ${i <= result.stars ? 'star--on' : ''}" style="--i:${i}">${ICONS.star}</span>`).join('');
   const detail = [
-    formatTime(result.seconds),
+    timeSummary(result.seconds, previousBest),
     result.mistakes ? `${result.mistakes} slip${result.mistakes > 1 ? 's' : ''}` : 'no slips',
     result.hintsUsed ? `${result.hintsUsed} hint${result.hintsUsed > 1 ? 's' : ''}` : 'no hints',
   ].join(' · ');
